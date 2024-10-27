@@ -1,0 +1,52 @@
+# Arquivos do Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.pyd
+*.pyo
+
+# Configurações de ambiente virtual
+.env
+.venv/
+venv/
+ENV/
+
+# Configurações do Poetry
+.poetry/
+poetry.lock
+
+# Cache e metadados do Poetry
+.cache/
+__pycache__/
+.cache
+*.egg-info/
+
+# Arquivos de build
+build/
+dist/
+*.egg
+*.egg-info/
+.eggs/
+*.manifest
+*.spec
+
+# Relatórios do pytest
+.cache
+*.cover
+htmlcov/
+*.log
+
+# Ruff linting
+ruff_cache/
+
+# Taskipy
+.taskipy_cache/
+
+# Configurações IDE e editor
+.vscode/
+.idea/
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
