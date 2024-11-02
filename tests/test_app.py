@@ -26,6 +26,48 @@ def test_create_user(client):
     }
 
 
+def test_create_user_already_registered(client):
+    client.post(
+        '/users/',
+        json={
+            'username': 'alice',
+            'email': 'alice@example.com',
+            'password': 'secret',
+        },
+    )
+
+    response = client.post(
+        '/users/',
+        json={
+            'username': 'alice',
+            'email': 'alice@example.com',
+            'password': 'secret',
+        },
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_create_user_with_already_used_email(client):
+    client.post(
+        '/users/',
+        json={
+            'username': 'alice',
+            'email': 'alice@example.com',
+            'password': 'secret',
+        },
+    )
+
+    response = client.post(
+        '/users/',
+        json={
+            'username': 'teste',
+            'email': 'alice@example.com',
+            'password': 'teste',
+        },
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
 def test_read_users(client):
     response = client.get('/users/')
     assert response.status_code == HTTPStatus.OK
@@ -38,17 +80,10 @@ def test_read_users_with_users(client, user):
     assert response.json() == {'users': [user_schema]}
 
 
-def test_update_user(client):
-    client.post(
-        '/users',
-        json={
-            'username': 'bob',
-            'email': 'bob@example.com',
-            'password': 'initialpassword',
-        },
-    )
+def test_update_user(client, user, token):
     response = client.put(
-        '/users/1',
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'bob',
             'email': 'bob@example.com',
@@ -59,25 +94,11 @@ def test_update_user(client):
     assert response.json() == {
         'username': 'bob',
         'email': 'bob@example.com',
-        'id': 1,
+        'id': user.id,
     }
 
 
-def test_update_usuario_nao_encontrado(client):
-    response = client.put(
-        '/users/0',
-        json={
-            'username': 'username',
-            'email': 'email@email.com',
-            'password': 'password',
-        },
-    )
-
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
-
-
-def test_update_integrity_error(client, user):
+def test_update_integrity_error(client, user, token):
     # Inserindo fausto
     client.post(
         '/users',
@@ -91,6 +112,7 @@ def test_update_integrity_error(client, user):
     # Alterando o user das fixture para fausto
     response_update = client.put(
         f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'fausto',
             'email': 'bob@example.com',
@@ -104,14 +126,22 @@ def test_update_integrity_error(client, user):
     }
 
 
-def test_delete_user(client, user):
-    response = client.delete('/users/1')
+def test_delete_user(client, user, token):
+    response = client.delete(
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'message': 'User deleted'}
 
 
-def test_delete_usuario_nao_encontrado(client):
-    response = client.delete('/users/0')
+def test_get_token(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': user.clean_password},
+    )
+    token = response.json()
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
+    assert response.status_code == HTTPStatus.OK
+    assert 'access_token' in token
+    assert 'token_type' in token
