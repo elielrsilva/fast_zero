@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime
 
+import factory
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import StaticPool, create_engine, event
@@ -47,11 +48,29 @@ def mock_db_time():
 @pytest.fixture
 def user(session):
     password = 'testtest'
+    user = UserFactory(password=get_password_hash(password))
     user = User(
         username='Teste',
         email='teste@test.com',
         password=get_password_hash('testtest'),
     )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    user.clean_password = password
+
+    return user
+
+
+# A criação de outra fixture chamada other_user é
+# crucial para simular o cenário de um usuário tentando
+# acessar ou modificar as informações de outro usuário no sistema.
+@pytest.fixture
+def other_user(session):
+    password = 'testtest'
+    user = UserFactory(password=get_password_hash(password))
+
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -83,3 +102,12 @@ def _mock_db_time(*, model, time=datetime(2024, 1, 1)):
     yield time
 
     event.remove(model, 'before_insert', fake_time_hook)
+
+
+class UserFactory(factory.Factory):
+    class Meta:
+        model = User
+
+    username = factory.Sequence(lambda n: f'test{n}')
+    email = factory.LazyAttribute(lambda obj: f'{obj.username}@test.com')
+    password = factory.LazyAttribute(lambda obj: f'{obj.username}@example.com')
