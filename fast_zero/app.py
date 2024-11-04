@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from fast_zero.database import get_session
 from fast_zero.models import User
-from fast_zero.routers import auth, users
+from fast_zero.routers import auth, todos, users
 from fast_zero.schemas import Token
 from fast_zero.security import (
     create_access_token,
@@ -18,6 +18,7 @@ app = FastAPI()
 
 app.include_router(users.router)
 app.include_router(auth.router)
+app.include_router(todos.router)
 
 
 @app.get('/')
